@@ -1,7 +1,15 @@
 import { useDispatch, useSelector } from 'react-redux';
+import { useEffect } from 'react';
 
-import { getContacts, getFilter } from '../../redux/selectors';
-import { deleteContact } from '../../redux/contactSlice';
+import {
+  selectContacts,
+  selectVisibleContacts,
+  selectError,
+  selectIsLoading,
+} from '../../redux/selectors';
+import { fetchContacts, deleteContact } from '../../redux/operations';
+
+import { Loader } from '../Loader/Loader';
 
 import { BsFillPersonDashFill } from 'react-icons/bs';
 import {
@@ -14,38 +22,49 @@ import {
 } from './ContactList.styled';
 
 export const ContactList = () => {
-  const contacts = useSelector(getContacts);
-  const filter = useSelector(getFilter);
+  const contacts = useSelector(selectContacts);
+  const visibleContacts = useSelector(selectVisibleContacts);
+  const error = useSelector(selectError);
+  const isLoading = useSelector(selectIsLoading);
   const dispatch = useDispatch();
 
-  const visibleContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(filter.toLowerCase())
-  );
+  useEffect(() => {
+    dispatch(fetchContacts());
+  }, [dispatch]);
 
-  if (!visibleContacts.length) {
+  if (!contacts.length) {
     return <NoContacts>No contacts added yet.</NoContacts>;
   }
 
-  const onDeleteContact = contactId => {
-    dispatch(deleteContact(contactId));
-  };
+  if (!visibleContacts.length) {
+    return (
+      <NoContacts>There is no such name in your contacts list.</NoContacts>
+    );
+  }
 
   return (
-    <ContactsList>
-      {visibleContacts.map(({ name, number, id }) => {
-        return (
-          <ContactsListItem key={id}>
-            <ItemWrap>
-              <ContactsWrap>{name}:</ContactsWrap>
-              <ContactsWrap>{number}</ContactsWrap>
-            </ItemWrap>
-            <DeleteBtn type="button" onClick={() => onDeleteContact(id)}>
-              Delete
-              <BsFillPersonDashFill size="16" />
-            </DeleteBtn>
-          </ContactsListItem>
-        );
-      })}
-    </ContactsList>
+    <>
+      {isLoading && <Loader />}
+      {error && <p>{error}</p>}
+      <ContactsList>
+        {visibleContacts.map(({ name, phone, id }) => {
+          return (
+            <ContactsListItem key={id}>
+              <ItemWrap>
+                <ContactsWrap>{name}:</ContactsWrap>
+                <ContactsWrap>{phone}</ContactsWrap>
+              </ItemWrap>
+              <DeleteBtn
+                type="button"
+                onClick={() => dispatch(deleteContact(id))}
+              >
+                Delete
+                <BsFillPersonDashFill size="16" />
+              </DeleteBtn>
+            </ContactsListItem>
+          );
+        })}
+      </ContactsList>
+    </>
   );
 };

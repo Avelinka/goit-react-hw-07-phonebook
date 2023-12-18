@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux';
 
-import { getContacts } from '../../redux/selectors';
-import { addContact } from '../../redux/contactSlice';
+import { selectContacts } from '../../redux/selectors';
+import { addContact } from '../../redux/operations';
 
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -24,11 +24,11 @@ const сontactSchema = Yup.object().shape({
   name: Yup.string()
     .trim()
     .matches(
-      /^[a-zA-Zа-яА-Я' -]+$/,
-      'Name may contain only letters, apostrophe, dash and spaces. For example Jane Dou'
+      /^[a-zA-Zа-яА-Я'. -]+$/,
+      'Name may contain only letters, apostrophe, dot, dash and spaces. For example Jane Dou'
     )
     .required('Required'),
-  number: Yup.string()
+  phone: Yup.string()
     .trim()
     .matches(
       /^[0-9]{3}-[0-9]{2}-[0-9]{2}$/,
@@ -38,34 +38,38 @@ const сontactSchema = Yup.object().shape({
 });
 
 export const ContactForm = () => {
-  const contacts = useSelector(getContacts);
+  const contacts = useSelector(selectContacts);
   const dispatch = useDispatch();
 
-  const onAddContact = newContact => {
-    const isExist = contacts.some(
-      ({ name, number }) =>
-        name.toLowerCase().trim() === newContact.name.toLowerCase().trim() ||
-        number.trim() === newContact.number.trim()
+  const onAddContact = (newContact, { resetForm }) => {
+    const isExistName = contacts.some(
+      ({ name }) => name.toLowerCase() === newContact.name.toLowerCase()
     );
 
-    if (isExist) {
+    const isExistPhone = contacts.some(
+      ({ phone }) => phone === newContact.phone
+    );
+
+    if (isExistName) {
       return toast.error(`${newContact.name}: is already in contacts`);
     }
 
+    if (isExistPhone) {
+      return toast.error(`${newContact.phone}: is already in contacts`);
+    }
+
     dispatch(addContact(newContact));
+    resetForm();
   };
 
   return (
     <Formik
       initialValues={{
         name: '',
-        number: '',
+        phone: '',
       }}
       validationSchema={сontactSchema}
-      onSubmit={(values, actions) => {
-        onAddContact({ ...values });
-        actions.resetForm();
-      }}
+      onSubmit={onAddContact}
     >
       <Form autoComplete="off">
         <Label htmlFor="name">
@@ -83,20 +87,20 @@ export const ContactForm = () => {
           />
           <ErrorMessage name="name" component="span" />
         </Label>
-        <Label htmlFor="number">
+        <Label htmlFor="phone">
           <LabelWrap>
             <BsTelephoneFill size="16" />
-            Number
+            Phone
           </LabelWrap>
           <Field
             autoComplete="off"
             type="tel"
-            id="number"
-            name="number"
+            id="phone"
+            name="phone"
             placeholder="111-11-11"
             required
           />
-          <ErrorMessage name="number" component="span" />
+          <ErrorMessage name="phone" component="span" />
         </Label>
         <AddBtn type="submit">
           Add contact

@@ -3,11 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { BsSearch } from 'react-icons/bs';
 import { SearchLabel, SearchWrap, SearchInput } from './SearchBar.styled';
 
-import { getFilter } from '../../redux/selectors';
+import { selectFilter } from '../../redux/selectors';
 import { setFilter } from '../../redux/filterSlice';
 
 export const SearchBar = () => {
-  const filter = useSelector(getFilter);
+  const filter = useSelector(selectFilter);
   const dispatch = useDispatch();
 
   const changeFilter = evt => {
